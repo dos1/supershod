@@ -46,6 +46,22 @@ struct CommonResources* CreateGameData(struct Game *game) {
 	return data;
 }
 
+void WhiteNoise(struct Game *game) {
+	ALLEGRO_BITMAP *bitmap = al_get_target_bitmap();
+	al_lock_bitmap(bitmap, ALLEGRO_LOCK_WRITEONLY, 0);
+	float val; int width, height;
+	width = al_get_bitmap_width(bitmap);
+	height = al_get_bitmap_height(bitmap);
+	for (int i=0; i < width; i++) {
+		for (int j=0; j < height; j++) {
+			val = (float)rand()/(float)RAND_MAX;
+			val+=0.2;
+			al_put_pixel(i, j, al_map_rgb_f(val, val, val));
+		}
+	}
+	al_unlock_bitmap(bitmap);
+}
+
 void DestroyGameData(struct Game *game, struct CommonResources *data) {
 	al_destroy_shader(game->data->shader);
 	al_destroy_bitmap(game->data->screen);
