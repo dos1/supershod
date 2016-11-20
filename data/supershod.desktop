@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=SUPERSHOD
+Exec=supershod
+Comment=SUPERSHOD
+Icon=supershod
+Terminal=false
+Categories=Game;ArcadeGame;
