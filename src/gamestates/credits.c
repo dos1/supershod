@@ -29,6 +29,9 @@ struct GamestateResources {
 		int blink_counter;
 		int blinks;
 		float pos;
+		ALLEGRO_SAMPLE *sample;
+		ALLEGRO_SAMPLE_INSTANCE *ambient;
+
 };
 
 int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
@@ -36,9 +39,10 @@ int Gamestate_ProgressCount = 1; // number of loading steps as reported by Games
 void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
 
-	data->pos -= 0.33;
+	data->pos -= 0.4;
 
 	if (data->pos < -42) {
+		al_stop_sample_instance(data->ambient);
 		FatalError(game, true, "No more game.");
 		UnloadAllGamestates(game);
 	}
@@ -71,6 +75,11 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	// Good place for allocating memory, loading bitmaps etc.
 	struct GamestateResources *data = malloc(sizeof(struct GamestateResources));
 	data->credits = al_load_bitmap(GetDataFilePath(game, "credits.png"));
+
+	data->sample = al_load_sample(GetDataFilePath(game, "credits.flac"));
+	data->ambient = al_create_sample_instance(data->sample);
+	al_attach_sample_instance_to_mixer(data->ambient, game->audio.music);
+
 	progress(game); // report that we progressed with the loading, so the engine can draw a progress bar
 	return data;
 }
@@ -88,10 +97,13 @@ void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
 	data->blink_counter = 0;
 	data->blinks = 0;
 	data->pos = 180;
+	al_play_sample_instance(data->ambient);
 }
 
 void Gamestate_Stop(struct Game *game, struct GamestateResources* data) {
 	// Called when gamestate gets stopped. Stop timers, music etc. here.
+	al_stop_sample_instance(data->ambient);
+
 }
 
 void Gamestate_Pause(struct Game *game, struct GamestateResources* data) {
