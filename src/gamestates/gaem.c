@@ -29,12 +29,14 @@ struct GamestateResources {
 		ALLEGRO_BITMAP *shod;
 		ALLEGRO_BITMAP *canvas;
 		ALLEGRO_BITMAP *time;
+		ALLEGRO_BITMAP *move, *move2, *move3, *move4, *move5;
 		struct Timeline *timeline;
 		int blink_counter;
 		int blinks;
 		bool showtime;
 		bool showsuper;
 		bool allowed;
+		bool showmove;
 		ALLEGRO_SAMPLE *sample;
 		ALLEGRO_SAMPLE_INSTANCE *ambient;
 		ALLEGRO_SAMPLE *clicks;
@@ -58,6 +60,61 @@ bool HideTime(struct Game *game, struct TM_Action *action, enum TM_ActionState s
 		data->showtime = false;
 		data->allowed = true;
 		al_play_sample_instance(data->click);
+	}
+	return true;
+}
+
+bool ShowMove(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
+	struct GamestateResources *data = action->arguments->value;
+	if (state == TM_ACTIONSTATE_START) {
+		if (!data->showsuper) {
+			data->showmove = true;
+			al_play_sample_instance(data->click);
+		}
+	}
+	return true;
+}
+
+bool ShowMove2(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
+	struct GamestateResources *data = action->arguments->value;
+	if (state == TM_ACTIONSTATE_START) {
+		if (!data->showsuper) {
+			data->move = data->move2;
+			al_play_sample_instance(data->click);
+		}
+	}
+	return true;
+}
+
+bool ShowMove3(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
+	struct GamestateResources *data = action->arguments->value;
+	if (state == TM_ACTIONSTATE_START) {
+		if (!data->showsuper) {
+			data->move = data->move3;
+			al_play_sample_instance(data->click);
+		}
+	}
+	return true;
+}
+
+bool ShowMove4(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
+	struct GamestateResources *data = action->arguments->value;
+	if (state == TM_ACTIONSTATE_START) {
+		if (!data->showsuper) {
+			data->move = data->move4;
+			al_play_sample_instance(data->click);
+		}
+	}
+	return true;
+}
+
+bool ShowMove5(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
+	struct GamestateResources *data = action->arguments->value;
+	if (state == TM_ACTIONSTATE_START) {
+		if (!data->showsuper) {
+			data->move = data->move5;
+			al_play_sample_instance(data->click);
+		}
 	}
 	return true;
 }
@@ -104,6 +161,10 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 		}
 	}
 
+	if (data->showmove) {
+		al_draw_bitmap(data->move, 0, 0, 0);
+	}
+
 	al_set_target_backbuffer(game->display);
 
 	al_use_shader(game->data->shader);
@@ -125,9 +186,11 @@ void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, 
 	}
 	if (data->allowed) {
 		if ((ev->type==ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_SPACE)) {
+			data->showmove = false;
 			data->showsuper = true;
 			data->blinks = 0;
 			data->blink_counter = 20;
+			data->allowed = false;
 		}
 	}
 }
@@ -139,6 +202,11 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	data->logo = al_load_bitmap(GetDataFilePath(game, "logo.png"));
 	data->time = al_load_bitmap(GetDataFilePath(game, "time.png"));
 	data->shod = al_load_bitmap(GetDataFilePath(game, "shod.png"));
+	data->move = al_load_bitmap(GetDataFilePath(game, "move.png"));
+	data->move2 = al_load_bitmap(GetDataFilePath(game, "move2.png"));
+	data->move3 = al_load_bitmap(GetDataFilePath(game, "move3.png"));
+	data->move4 = al_load_bitmap(GetDataFilePath(game, "move5.png"));
+	data->move5 = al_load_bitmap(GetDataFilePath(game, "move4.png"));
 	data->canvas = al_create_bitmap(320, 180);
 	data->timeline = TM_Init(game, "supershod");
 
@@ -173,10 +241,21 @@ void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
 	data->showtime = false;
 	data->allowed = false;
 	data->showsuper = false;
+	data->showmove = false;
 	TM_AddDelay(data->timeline, 3000);
 	TM_AddAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
 	TM_AddDelay(data->timeline, 4000);
 	TM_AddAction(data->timeline, HideTime, TM_AddToArgs(NULL, 1, data), "HideTime");
+	TM_AddDelay(data->timeline, 15000);
+	TM_AddAction(data->timeline, ShowMove, TM_AddToArgs(NULL, 1, data), "ShowMove");
+	TM_AddDelay(data->timeline, 6000);
+	TM_AddAction(data->timeline, ShowMove2, TM_AddToArgs(NULL, 1, data), "ShowMove2");
+	TM_AddDelay(data->timeline, 4000);
+	TM_AddAction(data->timeline, ShowMove3, TM_AddToArgs(NULL, 1, data), "ShowMove3");
+	TM_AddDelay(data->timeline, 4000);
+	TM_AddAction(data->timeline, ShowMove4, TM_AddToArgs(NULL, 1, data), "ShowMove4");
+	TM_AddDelay(data->timeline, 4000);
+	TM_AddAction(data->timeline, ShowMove5, TM_AddToArgs(NULL, 1, data), "ShowMove5");
 	al_play_sample_instance(data->ambient);
 	al_set_sample_instance_playmode(data->ambient, ALLEGRO_PLAYMODE_LOOP);
 	//al_set_sample_instance_gain(data->ambient, 0.9);
