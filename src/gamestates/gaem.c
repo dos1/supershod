@@ -185,13 +185,14 @@ void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, 
 		// When there are no active gamestates, the engine will quit.
 	}
 	if (data->allowed) {
-		if ((ev->type==ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_SPACE)) {
+		if (((ev->type==ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_SPACE)) || (ev->type==ALLEGRO_EVENT_TOUCH_BEGIN)) {
 			data->showmove = false;
 			data->showsuper = true;
 			data->blinks = 0;
 			data->blink_counter = 20;
 			data->allowed = false;
 		}
+
 	}
 }
 
