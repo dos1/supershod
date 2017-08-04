@@ -152,6 +152,8 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 		al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
 
 	}
+	TM_DrawDebug(game, data->timeline, 0);
+	TM_DrawDebug(game, data->timeline, 1);
 }
 
 void Gamestate_Start(struct Game *game, struct GamestateResources* data) {

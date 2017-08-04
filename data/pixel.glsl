@@ -1,26 +1,6 @@
-/*
 #ifdef GL_ES
-precision mediump float;
+precision lowp float;
 #endif
-uniform sampler2D al_tex;
-uniform bool al_use_tex;
-varying vec4 varying_color;
-varying vec2 varying_texcoord;
-void main()
-{
-  vec4 tmp;
-  if (al_use_tex)
-    tmp = varying_color * texture2D(al_tex, varying_texcoord);
-  else
-    tmp = varying_color;
-
-  tmp.g = 0.0;
-
-  gl_FragColor = tmp;
-}
-
-*/
-
 
 uniform sampler2D al_tex;
         //uniform vec2 rubyInputSize;

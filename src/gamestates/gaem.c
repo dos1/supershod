@@ -174,6 +174,8 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 	al_use_shader(NULL);
 
 	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
+
+	TM_DrawDebug(game, data->timeline, 0);
 }
 
 void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, ALLEGRO_EVENT *ev) {
