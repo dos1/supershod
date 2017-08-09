@@ -58,7 +58,6 @@ bool HideTime(struct Game *game, struct TM_Action *action, enum TM_ActionState s
 	struct GamestateResources *data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
 		data->showtime = false;
-		data->allowed = true;
 		al_play_sample_instance(data->click);
 	}
 	return true;
@@ -113,6 +112,7 @@ bool ShowMove5(struct Game *game, struct TM_Action *action, enum TM_ActionState 
 	if (state == TM_ACTIONSTATE_START) {
 		if (!data->showsuper) {
 			data->move = data->move5;
+			data->allowed = true;
 			al_play_sample_instance(data->click);
 		}
 	}
@@ -174,8 +174,6 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 	al_use_shader(NULL);
 
 	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
-
-	TM_DrawDebug(game, data->timeline, 0);
 }
 
 void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, ALLEGRO_EVENT *ev) {
