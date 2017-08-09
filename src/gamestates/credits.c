@@ -42,9 +42,7 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	data->pos -= 0.4;
 
 	if (data->pos < -42) {
-		al_stop_sample_instance(data->ambient);
-		FatalError(game, true, "No more game.");
-		UnloadAllGamestates(game);
+		SwitchCurrentGamestate(game, "bsod");
 	}
 }
 
