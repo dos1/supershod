@@ -23,30 +23,36 @@
 #include <libsuperderpy.h>
 
 struct GamestateResources {
-		// This struct is for every resource allocated and used by your gamestate.
-		// It gets created on load and then gets passed around to all other function calls.
-		ALLEGRO_BITMAP *logo;
-		ALLEGRO_BITMAP *shod;
-		ALLEGRO_BITMAP *canvas;
-		ALLEGRO_BITMAP *time;
-		ALLEGRO_BITMAP *move, *move2, *move3, *move4, *move5;
-		struct Timeline *timeline;
-		int blink_counter;
-		int blinks;
-		bool showtime;
-		bool showsuper;
-		bool allowed;
-		bool showmove;
-		ALLEGRO_SAMPLE *sample;
-		ALLEGRO_SAMPLE_INSTANCE *ambient;
-		ALLEGRO_SAMPLE *clicks;
-		ALLEGRO_SAMPLE_INSTANCE *click;
+	// This struct is for every resource allocated and used by your gamestate.
+	// It gets created on load and then gets passed around to all other function calls.
+	ALLEGRO_BITMAP* logo;
+	ALLEGRO_BITMAP *shod, *shod2, *shod3, *shod4;
+	ALLEGRO_BITMAP* canvas;
+	ALLEGRO_BITMAP* time;
+	ALLEGRO_BITMAP *move, *move2, *move3, *move4, *move5;
+	struct Timeline* timeline;
+	int blink_counter;
+	int blinks;
+	bool showtime;
+	bool showsuper;
+	bool allowed;
+	bool showmove;
+
+	bool player1;
+	bool player2;
+	bool player3;
+	bool player4;
+
+	ALLEGRO_SAMPLE* sample;
+	ALLEGRO_SAMPLE_INSTANCE* ambient;
+	ALLEGRO_SAMPLE* clicks;
+	ALLEGRO_SAMPLE_INSTANCE* click;
 };
 
 int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
 
-bool ShowTime(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
-	struct GamestateResources *data = action->arguments->value;
+bool ShowTime(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
 		data->showtime = true;
 		al_play_sample_instance(data->click);
@@ -54,8 +60,8 @@ bool ShowTime(struct Game *game, struct TM_Action *action, enum TM_ActionState s
 	return true;
 }
 
-bool HideTime(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
-	struct GamestateResources *data = action->arguments->value;
+bool HideTime(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
 		data->showtime = false;
 		al_play_sample_instance(data->click);
@@ -63,8 +69,8 @@ bool HideTime(struct Game *game, struct TM_Action *action, enum TM_ActionState s
 	return true;
 }
 
-bool ShowMove(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
-	struct GamestateResources *data = action->arguments->value;
+bool ShowMove(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
 		if (!data->showsuper) {
 			data->showmove = true;
@@ -74,8 +80,8 @@ bool ShowMove(struct Game *game, struct TM_Action *action, enum TM_ActionState s
 	return true;
 }
 
-bool ShowMove2(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
-	struct GamestateResources *data = action->arguments->value;
+bool ShowMove2(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
 		if (!data->showsuper) {
 			data->move = data->move2;
@@ -85,8 +91,8 @@ bool ShowMove2(struct Game *game, struct TM_Action *action, enum TM_ActionState 
 	return true;
 }
 
-bool ShowMove3(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
-	struct GamestateResources *data = action->arguments->value;
+bool ShowMove3(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
 		if (!data->showsuper) {
 			data->move = data->move3;
@@ -96,8 +102,8 @@ bool ShowMove3(struct Game *game, struct TM_Action *action, enum TM_ActionState 
 	return true;
 }
 
-bool ShowMove4(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
-	struct GamestateResources *data = action->arguments->value;
+bool ShowMove4(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
 		if (!data->showsuper) {
 			data->move = data->move4;
@@ -107,8 +113,8 @@ bool ShowMove4(struct Game *game, struct TM_Action *action, enum TM_ActionState 
 	return true;
 }
 
-bool ShowMove5(struct Game *game, struct TM_Action *action, enum TM_ActionState state) {
-	struct GamestateResources *data = action->arguments->value;
+bool ShowMove5(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
 		if (!data->showsuper) {
 			data->move = data->move5;
@@ -119,8 +125,7 @@ bool ShowMove5(struct Game *game, struct TM_Action *action, enum TM_ActionState 
 	return true;
 }
 
-
-void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
+void Gamestate_Logic(struct Game* game, struct GamestateResources* data) {
 	// Called 60 times per second. Here you should do all your game logic.
 	data->blink_counter++;
 	if (data->blink_counter > 60) {
@@ -139,16 +144,26 @@ void Gamestate_Logic(struct Game *game, struct GamestateResources* data) {
 	TM_Process(data->timeline);
 }
 
-void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
+void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 	// Called as soon as possible, but no sooner than next Gamestate_Logic call.
 	// Draw everything to the screen here.
 
 	al_set_target_bitmap(data->canvas);
-	al_clear_to_color(al_map_rgba(0,0,0,0));
+	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_bitmap(data->shod, 0, 0, 0);
 
+	if (data->player2) {
+		al_draw_bitmap(data->shod2, 0, 0, 0);
+	}
+	if (data->player3) {
+		al_draw_bitmap(data->shod3, 0, 0, 0);
+	}
+	if (data->player4) {
+		al_draw_bitmap(data->shod4, 0, 0, 0);
+	}
+
 	if (data->showtime || data->showsuper) {
-		al_draw_filled_rectangle(0, 0, 320, 180, al_map_rgba(0, 0, 0, 64 - (rand() % 4)));
+		al_draw_filled_rectangle(0, 0, 1920, 1080, al_map_rgba(0, 0, 0, 64 - (rand() % 4)));
 	}
 
 	if (data->showtime) {
@@ -167,48 +182,68 @@ void Gamestate_Draw(struct Game *game, struct GamestateResources* data) {
 
 	al_set_target_backbuffer(game->display);
 
-	al_use_shader(game->data->shader);
+	//al_use_shader(game->data->shader);
 	al_set_shader_int("scaleFactor", 1);
 	al_draw_bitmap(data->canvas, 0, 0, 0);
 
 	al_use_shader(NULL);
 
-	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
+	//al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
 }
 
-void Gamestate_ProcessEvent(struct Game *game, struct GamestateResources* data, ALLEGRO_EVENT *ev) {
+void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, ALLEGRO_EVENT* ev) {
 	// Called for each event in Allegro event queue.
 	// Here you can handle user input, expiring timers etc.
 	TM_HandleEvent(data->timeline, ev);
-	if ((ev->type==ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE)) {
+	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE)) {
 		UnloadCurrentGamestate(game); // mark this gamestate to be stopped and unloaded
 		// When there are no active gamestates, the engine will quit.
 	}
+
+	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ENTER)) {
+		TM_AddAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
+		TM_AddDelay(data->timeline, 4000);
+		TM_AddAction(data->timeline, HideTime, TM_AddToArgs(NULL, 1, data), "HideTime");
+	}
+
 	if (data->allowed) {
-		if (((ev->type==ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_SPACE)) || (ev->type==ALLEGRO_EVENT_TOUCH_BEGIN)) {
+		if (((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_SPACE)) || (ev->type == ALLEGRO_EVENT_TOUCH_BEGIN)) {
 			data->showmove = false;
 			data->showsuper = true;
 			data->blinks = 0;
 			data->blink_counter = 20;
 			data->allowed = false;
 		}
-
+	}
+	if (ev->type == ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN) {
+		if (ev->joystick.id == al_get_joystick(0)) {
+			data->player2 = true;
+		}
+		if (ev->joystick.id == al_get_joystick(1)) {
+			data->player3 = true;
+		}
+		if (ev->joystick.id == al_get_joystick(2)) {
+			data->player4 = true;
+		}
 	}
 }
 
-void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
+void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {
 	// Called once, when the gamestate library is being loaded.
 	// Good place for allocating memory, loading bitmaps etc.
-	struct GamestateResources *data = malloc(sizeof(struct GamestateResources));
+	struct GamestateResources* data = malloc(sizeof(struct GamestateResources));
 	data->logo = al_load_bitmap(GetDataFilePath(game, "logo.png"));
 	data->time = al_load_bitmap(GetDataFilePath(game, "time.png"));
 	data->shod = al_load_bitmap(GetDataFilePath(game, "shod.png"));
+	data->shod2 = al_load_bitmap(GetDataFilePath(game, "shod2.png"));
+	data->shod3 = al_load_bitmap(GetDataFilePath(game, "shod3.png"));
+	data->shod4 = al_load_bitmap(GetDataFilePath(game, "shod4.png"));
 	data->move = al_load_bitmap(GetDataFilePath(game, "move.png"));
 	data->move2 = al_load_bitmap(GetDataFilePath(game, "move2.png"));
 	data->move3 = al_load_bitmap(GetDataFilePath(game, "move3.png"));
 	data->move4 = al_load_bitmap(GetDataFilePath(game, "move5.png"));
 	data->move5 = al_load_bitmap(GetDataFilePath(game, "move4.png"));
-	data->canvas = al_create_bitmap(320, 180);
+	data->canvas = al_create_bitmap(1920, 1080);
 	data->timeline = TM_Init(game, "supershod");
 
 	data->sample = al_load_sample(GetDataFilePath(game, "ambient.flac"));
@@ -223,7 +258,7 @@ void* Gamestate_Load(struct Game *game, void (*progress)(struct Game*)) {
 	return data;
 }
 
-void Gamestate_Unload(struct Game *game, struct GamestateResources* data) {
+void Gamestate_Unload(struct Game* game, struct GamestateResources* data) {
 	// Called when the gamestate library is being unloaded.
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_bitmap(data->logo);
@@ -234,15 +269,22 @@ void Gamestate_Unload(struct Game *game, struct GamestateResources* data) {
 	free(data);
 }
 
-void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
+void Gamestate_Start(struct Game* game, struct GamestateResources* data) {
 	// Called when this gamestate gets control. Good place for initializing state,
 	// playing music etc.
 	data->blink_counter = 0;
 	data->blinks = 0;
 	data->showtime = false;
-	data->allowed = false;
+	data->allowed = true;
 	data->showsuper = false;
 	data->showmove = false;
+
+	data->player1 = true;
+	data->player2 = false;
+	data->player3 = false;
+	data->player4 = false;
+
+	/*
 	TM_AddDelay(data->timeline, 3000);
 	TM_AddAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
 	TM_AddDelay(data->timeline, 4000);
@@ -257,25 +299,27 @@ void Gamestate_Start(struct Game *game, struct GamestateResources* data) {
 	TM_AddAction(data->timeline, ShowMove4, TM_AddToArgs(NULL, 1, data), "ShowMove4");
 	TM_AddDelay(data->timeline, 4000);
 	TM_AddAction(data->timeline, ShowMove5, TM_AddToArgs(NULL, 1, data), "ShowMove5");
+	*/
+
 	al_play_sample_instance(data->ambient);
 	al_set_sample_instance_playmode(data->ambient, ALLEGRO_PLAYMODE_LOOP);
 	//al_set_sample_instance_gain(data->ambient, 0.9);
 }
 
-void Gamestate_Stop(struct Game *game, struct GamestateResources* data) {
+void Gamestate_Stop(struct Game* game, struct GamestateResources* data) {
 	// Called when gamestate gets stopped. Stop timers, music etc. here.
 	al_stop_sample_instance(data->ambient);
 }
 
-void Gamestate_Pause(struct Game *game, struct GamestateResources* data) {
+void Gamestate_Pause(struct Game* game, struct GamestateResources* data) {
 	// Called when gamestate gets paused (so only Draw is being called, no Logic not ProcessEvent)
 	// Pause your timers here.
 }
 
-void Gamestate_Resume(struct Game *game, struct GamestateResources* data) {
+void Gamestate_Resume(struct Game* game, struct GamestateResources* data) {
 	// Called when gamestate gets resumed. Resume your timers here.
 }
 
 // Ignore this for now.
 // TODO: Check, comment, refine and/or remove:
-void Gamestate_Reload(struct Game *game, struct GamestateResources* data) {}
+void Gamestate_Reload(struct Game* game, struct GamestateResources* data) {}

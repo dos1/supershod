@@ -22,8 +22,8 @@
 #include <libsuperderpy.h>
 #include <math.h>
 
-#define NEXT_GAMESTATE "logo"
-#define SKIP_GAMESTATE NEXT_GAMESTATE
+#define NEXT_GAMESTATE "holypangolin"
+#define SKIP_GAMESTATE "logo"
 
 struct GamestateResources {
 	ALLEGRO_FONT* font;
@@ -143,7 +143,7 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 
 		al_use_shader(NULL);
 
-		al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
+		al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 1920, 1080, 0);
 	}
 }
 

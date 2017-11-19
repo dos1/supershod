@@ -38,18 +38,22 @@ int main(int argc, char** argv) {
 	al_set_org_name("dosowisko.net");
 	al_set_app_name(LIBSUPERDERPY_GAMENAME_PRETTY);
 
-	struct Game* game = libsuperderpy_init(argc, argv, LIBSUPERDERPY_GAMENAME, (struct Viewport){320, 180});
+	struct Game* game = libsuperderpy_init(argc, argv, LIBSUPERDERPY_GAMENAME, (struct Viewport){1920, 1080});
 	if (!game) { return 1; }
 
 	al_set_window_title(game->display, LIBSUPERDERPY_GAMENAME_PRETTY);
 
 	LoadGamestate(game, "dosowisko");
+	LoadGamestate(game, "holypangolin");
+	LoadGamestate(game, "logo");
 	StartGamestate(game, "dosowisko");
 
 	game->data = CreateGameData(game);
 
 	game->handlers.event = &GlobalEventHandler;
 	game->handlers.destroy = &DestroyGameData;
+
+	al_set_mixer_gain(game->audio.fx, 1.75);
 
 	return libsuperderpy_run(game);
 }

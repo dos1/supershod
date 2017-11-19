@@ -57,8 +57,19 @@ struct CommonResources* CreateGameData(struct Game* game) {
 	data->super = al_create_sample_instance(data->supersample);
 	data->shod = al_create_sample_instance(data->shodsample);
 
+	data->hsample = al_load_sample(GetDataFilePath(game, "h.flac"));
+	data->dsample = al_load_sample(GetDataFilePath(game, "d.flac"));
+
+	data->h = al_create_sample_instance(data->hsample);
+	data->d = al_create_sample_instance(data->dsample);
+
 	al_attach_sample_instance_to_mixer(data->super, game->audio.fx);
 	al_attach_sample_instance_to_mixer(data->shod, game->audio.fx);
+	al_attach_sample_instance_to_mixer(data->h, game->audio.fx);
+	al_attach_sample_instance_to_mixer(data->d, game->audio.fx);
+
+	al_set_sample_instance_gain(data->h, 1.2);
+	al_set_sample_instance_gain(data->d, 1.2);
 
 	data->screen = al_load_bitmap(GetDataFilePath(game, "screen.png"));
 
