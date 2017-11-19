@@ -20,11 +20,11 @@
  */
 
 #include "common.h"
-#include <math.h>
 #include <libsuperderpy.h>
+#include <math.h>
 
-bool GlobalEventHandler(struct Game *game, ALLEGRO_EVENT *ev) {
-	if ((ev->type==ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_F)) {
+bool GlobalEventHandler(struct Game* game, ALLEGRO_EVENT* ev) {
+	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_F)) {
 		game->config.fullscreen = !game->config.fullscreen;
 		if (game->config.fullscreen) {
 			SetConfigOption(game, "SuperDerpy", "fullscreen", "1");
@@ -41,9 +41,8 @@ bool GlobalEventHandler(struct Game *game, ALLEGRO_EVENT *ev) {
 	return false;
 }
 
-
-struct CommonResources* CreateGameData(struct Game *game) {
-	struct CommonResources *data = calloc(1, sizeof(struct CommonResources));
+struct CommonResources* CreateGameData(struct Game* game) {
+	struct CommonResources* data = calloc(1, sizeof(struct CommonResources));
 
 	data->shader = al_create_shader(ALLEGRO_SHADER_GLSL);
 	PrintConsole(game, "VERTEX: %d", al_attach_shader_source_file(data->shader, ALLEGRO_VERTEX_SHADER, GetDataFilePath(game, "vertex.glsl")));
@@ -66,30 +65,30 @@ struct CommonResources* CreateGameData(struct Game *game) {
 	return data;
 }
 
-void WhiteNoise(struct Game *game) {
-	ALLEGRO_BITMAP *bitmap = al_get_target_bitmap();
+void WhiteNoise(struct Game* game) {
+	ALLEGRO_BITMAP* bitmap = al_get_target_bitmap();
 	al_lock_bitmap(bitmap, ALLEGRO_LOCK_WRITEONLY, 0);
-	float val; int width, height;
+	float val;
+	int width, height;
 	width = al_get_bitmap_width(bitmap);
 	height = al_get_bitmap_height(bitmap);
-	for (int i=0; i < width; i++) {
-		for (int j=0; j < height; j++) {
-			val = rand()/(float)RAND_MAX;
-			val+=0.2;
-			val=fmin(val, 1);
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
+			val = rand() / (float)RAND_MAX;
+			val += 0.2;
+			val = fmin(val, 1);
 			al_put_pixel(i, j, al_map_rgb_f(val, val, val));
 		}
 	}
 	al_unlock_bitmap(bitmap);
 }
 
-void DestroyGameData(struct Game *game, struct CommonResources *data) {
+void DestroyGameData(struct Game* game) {
 	al_destroy_shader(game->data->shader);
 	al_destroy_bitmap(game->data->screen);
 	al_destroy_sample_instance(game->data->super);
 	al_destroy_sample_instance(game->data->shod);
 	al_destroy_sample(game->data->supersample);
 	al_destroy_sample(game->data->shodsample);
-	free(data);
+	free(game->data);
 }
-
