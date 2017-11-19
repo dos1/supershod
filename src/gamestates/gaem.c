@@ -284,11 +284,12 @@ void Gamestate_Start(struct Game* game, struct GamestateResources* data) {
 	data->player3 = false;
 	data->player4 = false;
 
-	/*
 	TM_AddDelay(data->timeline, 3000);
 	TM_AddAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
 	TM_AddDelay(data->timeline, 4000);
 	TM_AddAction(data->timeline, HideTime, TM_AddToArgs(NULL, 1, data), "HideTime");
+
+	/*
 	TM_AddDelay(data->timeline, 15000);
 	TM_AddAction(data->timeline, ShowMove, TM_AddToArgs(NULL, 1, data), "ShowMove");
 	TM_AddDelay(data->timeline, 6000);
