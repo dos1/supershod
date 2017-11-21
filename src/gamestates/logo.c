@@ -54,8 +54,8 @@ void Gamestate_Logic(struct Game* game, struct GamestateResources* data) {
 void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 	// Called as soon as possible, but no sooner than next Gamestate_Logic call.
 	// Draw everything to the screen here.
-	al_use_shader(game->data->shader);
-	al_set_shader_int("scaleFactor", 1);
+	al_set_target_bitmap(game->data->fb);
+	al_clear_to_color(al_map_rgb(24, 24, 24));
 
 	if (data->blink_counter >= 20) {
 		if (data->blinks < 2) {
@@ -65,9 +65,7 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 		}
 	}
 
-	al_use_shader(NULL);
-
-	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
+	DrawCRTScreen(game);
 }
 
 void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, ALLEGRO_EVENT* ev) {

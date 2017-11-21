@@ -33,8 +33,11 @@ void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, 
 void Gamestate_Logic(struct Game* game, struct GamestateResources* data){};
 
 void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
-	al_draw_filled_rectangle(0, game->viewport.height * 0.98, game->viewport.width, game->viewport.height, al_map_rgba(32, 32, 32, 32));
-	al_draw_filled_rectangle(0, game->viewport.height * 0.98, game->loading_progress * game->viewport.width, game->viewport.height, al_map_rgba(128, 128, 128, 128));
+	al_set_target_bitmap(game->data->fb);
+	al_clear_to_color(al_map_rgb(24, 24, 24));
+	al_draw_filled_rectangle(0, game->viewport.height * 0.97, game->viewport.width, game->viewport.height, al_map_rgba(32, 32, 32, 32));
+	al_draw_filled_rectangle(0, game->viewport.height * 0.97, game->loading_progress * game->viewport.width, game->viewport.height, al_map_rgba(128, 128, 128, 128));
+	DrawCRTScreen(game);
 };
 
 void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {

@@ -23,6 +23,20 @@
 #include <libsuperderpy.h>
 #include <math.h>
 
+void DrawCRTScreen(struct Game* game) {
+	al_set_target_backbuffer(game->display);
+	al_use_shader(game->data->shader);
+	int x, y, w, h;
+	al_get_clipping_rectangle(&x, &y, &w, &h);
+	float res[2] = {w, h};
+	al_set_shader_float_vector("res", 2, res, 1);
+	float offset[2] = {x, y};
+	al_set_shader_float_vector("offset", 2, offset, 1);
+	al_draw_bitmap(game->data->fb, 0, 0, 0);
+	al_use_shader(NULL);
+	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 1920, 1080, 0);
+}
+
 bool GlobalEventHandler(struct Game* game, ALLEGRO_EVENT* ev) {
 	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_F)) {
 		game->config.fullscreen = !game->config.fullscreen;
@@ -33,6 +47,7 @@ bool GlobalEventHandler(struct Game* game, ALLEGRO_EVENT* ev) {
 			SetConfigOption(game, "SuperDerpy", "fullscreen", "0");
 			al_show_mouse_cursor(game->display);
 		}
+		al_set_display_flag(game->display, ALLEGRO_FRAMELESS, game->config.fullscreen);
 		al_set_display_flag(game->display, ALLEGRO_FULLSCREEN_WINDOW, game->config.fullscreen);
 		SetupViewport(game, game->viewport_config);
 		PrintConsole(game, "Fullscreen toggled");
@@ -72,6 +87,7 @@ struct CommonResources* CreateGameData(struct Game* game) {
 	al_set_sample_instance_gain(data->d, 1.2);
 
 	data->screen = al_load_bitmap(GetDataFilePath(game, "screen.png"));
+	data->fb = al_create_bitmap(1920, 1080);
 
 	return data;
 }
@@ -97,6 +113,7 @@ void WhiteNoise(struct Game* game) {
 void DestroyGameData(struct Game* game) {
 	al_destroy_shader(game->data->shader);
 	al_destroy_bitmap(game->data->screen);
+	al_destroy_bitmap(game->data->fb);
 	al_destroy_sample_instance(game->data->super);
 	al_destroy_sample_instance(game->data->shod);
 	al_destroy_sample(game->data->supersample);

@@ -48,21 +48,17 @@ void Gamestate_Logic(struct Game* game, struct GamestateResources* data) {
 void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 	// Called as soon as possible, but no sooner than next Gamestate_Logic call.
 	// Draw everything to the screen here.
-	al_use_shader(game->data->shader);
-	al_set_shader_int("scaleFactor", 1);
-
+	al_set_target_bitmap(game->data->fb);
+	al_clear_to_color(al_map_rgb(24, 24, 24));
 	al_draw_bitmap(data->credits, 0, (int)(data->pos * 1080 / 180.0), 0);
-
-	al_use_shader(NULL);
-
-	//	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
+	DrawCRTScreen(game);
 }
 
 void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, ALLEGRO_EVENT* ev) {
 	// Called for each event in Allegro event queue.
 	// Here you can handle user input, expiring timers etc.
 	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE)) {
-		SwitchCurrentGamestate(game, "gaem"); // mark this gamestate to be stopped and unloaded
+		SwitchCurrentGamestate(game, "bsod"); // mark this gamestate to be stopped and unloaded
 		// When there are no active gamestates, the engine will quit.
 	}
 }

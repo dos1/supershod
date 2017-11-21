@@ -29,14 +29,12 @@ struct GamestateResources {
 	ALLEGRO_BITMAP *shod, *shod2, *shod3, *shod4;
 	ALLEGRO_BITMAP* canvas;
 	ALLEGRO_BITMAP* time;
-	ALLEGRO_BITMAP *move, *move2, *move3, *move4, *move5;
 	struct Timeline* timeline;
 	int blink_counter;
 	int blinks;
 	bool showtime;
 	bool showsuper;
 	bool allowed;
-	bool showmove;
 
 	bool player1;
 	bool player2;
@@ -49,76 +47,24 @@ struct GamestateResources {
 	ALLEGRO_SAMPLE_INSTANCE* click;
 };
 
-int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
+int Gamestate_ProgressCount = 8; // number of loading steps as reported by Gamestate_Load
 
-bool ShowTime(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+static bool ShowTime(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
 	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
-		data->showtime = true;
-		al_play_sample_instance(data->click);
-	}
-	return true;
-}
-
-bool HideTime(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
-	struct GamestateResources* data = action->arguments->value;
-	if (state == TM_ACTIONSTATE_START) {
-		data->showtime = false;
-		al_play_sample_instance(data->click);
-	}
-	return true;
-}
-
-bool ShowMove(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
-	struct GamestateResources* data = action->arguments->value;
-	if (state == TM_ACTIONSTATE_START) {
-		if (!data->showsuper) {
-			data->showmove = true;
+		if (data->allowed) {
+			data->showtime = true;
 			al_play_sample_instance(data->click);
 		}
 	}
 	return true;
 }
 
-bool ShowMove2(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
+static bool HideTime(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
 	struct GamestateResources* data = action->arguments->value;
 	if (state == TM_ACTIONSTATE_START) {
-		if (!data->showsuper) {
-			data->move = data->move2;
-			al_play_sample_instance(data->click);
-		}
-	}
-	return true;
-}
-
-bool ShowMove3(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
-	struct GamestateResources* data = action->arguments->value;
-	if (state == TM_ACTIONSTATE_START) {
-		if (!data->showsuper) {
-			data->move = data->move3;
-			al_play_sample_instance(data->click);
-		}
-	}
-	return true;
-}
-
-bool ShowMove4(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
-	struct GamestateResources* data = action->arguments->value;
-	if (state == TM_ACTIONSTATE_START) {
-		if (!data->showsuper) {
-			data->move = data->move4;
-			al_play_sample_instance(data->click);
-		}
-	}
-	return true;
-}
-
-bool ShowMove5(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
-	struct GamestateResources* data = action->arguments->value;
-	if (state == TM_ACTIONSTATE_START) {
-		if (!data->showsuper) {
-			data->move = data->move5;
-			data->allowed = true;
+		if (data->allowed) {
+			data->showtime = false;
 			al_play_sample_instance(data->click);
 		}
 	}
@@ -148,7 +94,7 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 	// Called as soon as possible, but no sooner than next Gamestate_Logic call.
 	// Draw everything to the screen here.
 
-	al_set_target_bitmap(data->canvas);
+	al_set_target_bitmap(game->data->fb);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_bitmap(data->shod, 0, 0, 0);
 
@@ -176,17 +122,9 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 		}
 	}
 
-	if (data->showmove) {
-		al_draw_bitmap(data->move, 0, 0, 0);
-	}
-
 	al_set_target_backbuffer(game->display);
 
-	//al_use_shader(game->data->shader);
-	al_set_shader_int("scaleFactor", 1);
-	al_draw_bitmap(data->canvas, 0, 0, 0);
-
-	al_use_shader(NULL);
+	al_draw_bitmap(game->data->fb, 0, 0, 0);
 
 	//al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 320, 180, 0);
 }
@@ -201,14 +139,17 @@ void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, 
 	}
 
 	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ENTER)) {
-		TM_AddAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
-		TM_AddDelay(data->timeline, 4000);
-		TM_AddAction(data->timeline, HideTime, TM_AddToArgs(NULL, 1, data), "HideTime");
+		if (data->allowed) {
+			TM_CleanQueue(data->timeline);
+			TM_AddAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
+			TM_AddDelay(data->timeline, 4000);
+			TM_AddAction(data->timeline, HideTime, TM_AddToArgs(NULL, 1, data), "HideTime");
+		}
 	}
 
 	if (data->allowed) {
 		if (((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_SPACE)) || (ev->type == ALLEGRO_EVENT_TOUCH_BEGIN)) {
-			data->showmove = false;
+			data->showtime = false;
 			data->showsuper = true;
 			data->blinks = 0;
 			data->blink_counter = 20;
@@ -226,6 +167,17 @@ void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, 
 			data->player4 = true;
 		}
 	}
+	if (ev->type == ALLEGRO_EVENT_KEY_DOWN) {
+		if (ev->keyboard.keycode == ALLEGRO_KEY_2) {
+			data->player2 = true;
+		}
+		if (ev->keyboard.keycode == ALLEGRO_KEY_3) {
+			data->player3 = true;
+		}
+		if (ev->keyboard.keycode == ALLEGRO_KEY_4) {
+			data->player4 = true;
+		}
+	}
 }
 
 void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {
@@ -233,22 +185,24 @@ void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {
 	// Good place for allocating memory, loading bitmaps etc.
 	struct GamestateResources* data = malloc(sizeof(struct GamestateResources));
 	data->logo = al_load_bitmap(GetDataFilePath(game, "logo.png"));
+	progress(game);
 	data->time = al_load_bitmap(GetDataFilePath(game, "time.png"));
+	progress(game);
 	data->shod = al_load_bitmap(GetDataFilePath(game, "shod.png"));
+	progress(game);
 	data->shod2 = al_load_bitmap(GetDataFilePath(game, "shod2.png"));
+	progress(game);
 	data->shod3 = al_load_bitmap(GetDataFilePath(game, "shod3.png"));
+	progress(game);
 	data->shod4 = al_load_bitmap(GetDataFilePath(game, "shod4.png"));
-	data->move = al_load_bitmap(GetDataFilePath(game, "move.png"));
-	data->move2 = al_load_bitmap(GetDataFilePath(game, "move2.png"));
-	data->move3 = al_load_bitmap(GetDataFilePath(game, "move3.png"));
-	data->move4 = al_load_bitmap(GetDataFilePath(game, "move5.png"));
-	data->move5 = al_load_bitmap(GetDataFilePath(game, "move4.png"));
+	progress(game);
 	data->canvas = al_create_bitmap(1920, 1080);
 	data->timeline = TM_Init(game, "supershod");
 
 	data->sample = al_load_sample(GetDataFilePath(game, "ambient.flac"));
 	data->ambient = al_create_sample_instance(data->sample);
 	al_attach_sample_instance_to_mixer(data->ambient, game->audio.music);
+	progress(game);
 
 	data->clicks = al_load_sample(GetDataFilePath(game, "click.flac"));
 	data->click = al_create_sample_instance(data->clicks);
@@ -277,7 +231,6 @@ void Gamestate_Start(struct Game* game, struct GamestateResources* data) {
 	data->showtime = false;
 	data->allowed = true;
 	data->showsuper = false;
-	data->showmove = false;
 
 	data->player1 = true;
 	data->player2 = false;

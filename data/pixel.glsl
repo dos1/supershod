@@ -1,137 +1,169 @@
 #ifdef GL_ES
-precision lowp float;
+precision highp float;
+precision highp int;
+#endif
+//
+// PUBLIC DOMAIN CRT STYLED SCAN-LINE SHADER
+//
+//   by Timothy Lottes
+//
+// This is more along the style of a really good CGA arcade monitor.
+// With RGB inputs instead of NTSC.
+// The shadow mask example has the mask rotated 90 degrees for less chromatic aberration.
+//
+// Left it unoptimized to show the theory behind the algorithm.
+//
+// It is an example what I personally would want as a display option for pixel art games.
+// Please take and use, change, or whatever.
+//
+uniform sampler2D tex;
+uniform float width;
+uniform float height;
+
+// Emulated input resolution.
+uniform vec2 res;
+uniform vec2 offset;
+//vec2 res = vec2(width, height);
+#if 1
+  // Fix resolution to set amount.
+  //#define res (vec2(1920.0/1.0,1080.0/1.0))
+#else
+  // Optimize for resize.
+  //#define res (iResolution.xy/6.0)
 #endif
 
-uniform sampler2D al_tex;
-        //uniform vec2 rubyInputSize;
-        //uniform vec2 rubyOutputSize;
-        //uniform vec2 rubyTextureSize;
+// Hardness of scanline.
+//  -8.0 = soft
+// -16.0 = medium
+float hardScan=-8.0;
 
-uniform int scaleFactor;
+// Hardness of pixels in scanline.
+// -2.0 = soft
+// -4.0 = hard
+float hardPix=-3.0;
 
-	#define size vec2(480*scaleFactor, 360*scaleFactor)
-        
-        #define rubyInputSize size
-        #define rubyOutputSize size
-        #define rubyTextureSize size
- 
-        varying vec2 varying_texcoord;
-        varying vec2 one;
-        varying float mod_factor;
- 
-        // Enable screen curvature.
-        #define CURVATURE
- 
-        // Controls the intensity of the barrel distortion used to emulate the
-        // curvature of a CRT. 0.0 is perfectly flat, 1.0 is annoyingly
-        // distorted, higher values are increasingly ridiculous.
-        #define distortion 0.1
- 
-        // Simulate a CRT gamma of 2.4.
-        #define inputGamma  2.4
- 
-        // Compensate for the standard sRGB gamma of 2.2.
-        #define outputGamma 2.2
- 
-        // Macros.
-        #define TEX2D(c) pow(texture2D(al_tex, (c)), vec4(inputGamma))
-        #define PI 3.141592653589
- 
-        // Apply radial distortion to the given coordinate.
-        vec2 radialDistortion(vec2 coord)
-        {
-                coord *= rubyTextureSize / rubyInputSize;
-                vec2 cc = coord - 0.5;
-                float dist = dot(cc, cc) * distortion;
-                return (coord + cc * (1.0 + dist) * dist) * rubyInputSize / rubyTextureSize;
-        }
- 
-        // Calculate the influence of a scanline on the current pixel.
-        //
-        // 'distance' is the distance in texture coordinates from the current
-        // pixel to the scanline in question.
-        // 'color' is the colour of the scanline at the horizontal location of
-        // the current pixel.
-        vec4 scanlineWeights(float distance, vec4 color)
-        {
-                // The "width" of the scanline beam is set as 2*(1 + x^4) for
-                // each RGB channel.
-                vec4 wid = 2.0 + 2.0 * pow(color, vec4(4.0));
- 
-                // The "weights" lines basically specify the formula that gives
-                // you the profile of the beam, i.e. the intensity as
-                // a function of distance from the vertical center of the
-                // scanline. In this case, it is gaussian if width=2, and
-                // becomes nongaussian for larger widths. Ideally this should
-                // be normalized so that the integral across the beam is
-                // independent of its width. That is, for a narrower beam
-                // "weights" should have a higher peak at the center of the
-                // scanline than for a wider beam.
-                vec4 weights = vec4(distance / 0.3);
-                return 1.4 * exp(-pow(weights * inversesqrt(0.5 * wid), wid)) / (0.6 + 0.2 * wid);
-        }
- 
-        void main()
-        {
-                // Here's a helpful diagram to keep in mind while trying to
-                // understand the code:
-                //
-                //  |      |      |      |      |
-                // -------------------------------
-                //  |      |      |      |      |
-                //  |  01  |  11  |  21  |  31  | <-- current scanline
-                //  |      | @    |      |      |
-                // -------------------------------
-                //  |      |      |      |      |
-                //  |  02  |  12  |  22  |  32  | <-- next scanline
-                //  |      |      |      |      |
-                // -------------------------------
-                //  |      |      |      |      |
-                //
-                // Each character-cell represents a pixel on the output
-                // surface, "@" represents the current pixel (always somewhere
-                // in the bottom half of the current scan-line, or the top-half
-                // of the next scanline). The grid of lines represents the
-                // edges of the texels of the underlying texture.
- 
-                // Texture coordinates of the texel containing the active pixel.
-        #ifdef CURVATURE
-                vec2 xy = radialDistortion(varying_texcoord);
-        #else
-                vec2 xy = varying_texcoord;
-        #endif
- 
-                // Of all the pixels that are mapped onto the texel we are
-                // currently rendering, which pixel are we currently rendering?
-                vec2 ratio_scale = xy * rubyTextureSize - vec2(0.5);
-                vec2 uv_ratio = fract(ratio_scale);
- 
-                // Snap to the center of the underlying texel.
-                xy.y = (floor(ratio_scale.y) + 0.5) / rubyTextureSize.y;
- 
-                // Calculate the effective colour of the current and next
-                // scanlines at the horizontal location of the current pixel.
-                vec4 col  = TEX2D(xy);
-                vec4 col2 = TEX2D(xy + vec2(0.0, one.y));
- 
-                // Calculate the influence of the current and next scanlines on
-                // the current pixel.
-                vec4 weights  = scanlineWeights(uv_ratio.y, col);
-                vec4 weights2 = scanlineWeights(1.0 - uv_ratio.y, col2);
-                vec3 mul_res  = (col * weights + col2 * weights2).rgb;
- 
-                // dot-mask emulation:
-                // Output pixels are alternately tinted green and magenta.
-                vec3 dotMaskWeights = mix(
-                        vec3(1.0, 0.7, 1.0),
-                        vec3(0.7, 1.0, 0.7),
-                        floor(mod(mod_factor, 2.0))
-                    );
- 
-                mul_res *= dotMaskWeights;
- 
-                gl_FragColor = vec4(pow(mul_res, vec3(1.0 / outputGamma)), 1.0);
-                //gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
-        }
-        
+// Display warp.
+// 0.0 = none
+// 1.0/8.0 = extreme
+vec2 warp=vec2(1.0/192.0,1.0/192.0); 
+
+// Amount of shadow mask.
+float maskDark=0.666;
+float maskLight=1.5;
+
+//------------------------------------------------------------------------
+
+// sRGB to Linear.
+// Assuing using sRGB typed textures this should not be needed.
+float ToLinear1(float c){return(c<=0.04045)?c/12.92:pow((c+0.055)/1.055,2.4);}
+vec3 ToLinear(vec3 c){return vec3(ToLinear1(c.r),ToLinear1(c.g),ToLinear1(c.b));}
+
+// Linear to sRGB.
+// Assuing using sRGB typed textures this should not be needed.
+float ToSrgb1(float c){return(c<0.0031308?c*12.92:1.055*pow(c,0.41666)-0.055);}
+vec3 ToSrgb(vec3 c){return vec3(ToSrgb1(c.r),ToSrgb1(c.g),ToSrgb1(c.b));}
+
+// Nearest emulated sample given floating point position and texel offset.
+// Also zero's off screen.
+vec3 Fetch(vec2 pos,vec2 off){
+  pos=floor(pos*res+off)/res-(offset/res);
+  if(max(abs(pos.x-0.5),abs(pos.y-0.5))>0.5)return vec3(0.0,0.0,0.0);
+ // pos.y = 1.0-pos.y;
+  return ToLinear(texture2D(tex,pos.xy,-16.0).rgb);}
+
+// Distance in emulated pixels to nearest texel.
+vec2 Dist(vec2 pos){pos=pos*res;return -((pos-floor(pos))-vec2(0.5));}
     
+// 1D Gaussian.
+float Gaus(float pos,float scale){return exp2(scale*pos*pos);}
+
+// 3-tap Gaussian filter along horz line.
+vec3 Horz3(vec2 pos,float off){
+  vec3 b=Fetch(pos,vec2(-1.0,off));
+  vec3 c=Fetch(pos,vec2( 0.0,off));
+  vec3 d=Fetch(pos,vec2( 1.0,off));
+  float dst=Dist(pos).x;
+  // Convert distance to weight.
+  float scale=hardPix;
+  float wb=Gaus(dst-1.0,scale);
+  float wc=Gaus(dst+0.0,scale);
+  float wd=Gaus(dst+1.0,scale);
+  // Return filtered sample.
+  return (b*wb+c*wc+d*wd)/(wb+wc+wd);}
+
+// 5-tap Gaussian filter along horz line.
+vec3 Horz5(vec2 pos,float off){
+  vec3 a=Fetch(pos,vec2(-2.0,off));
+  vec3 b=Fetch(pos,vec2(-1.0,off));
+  vec3 c=Fetch(pos,vec2( 0.0,off));
+  vec3 d=Fetch(pos,vec2( 1.0,off));
+  vec3 e=Fetch(pos,vec2( 2.0,off));
+  float dst=Dist(pos).x;
+  // Convert distance to weight.
+  float scale=hardPix;
+  float wa=Gaus(dst-2.0,scale);
+  float wb=Gaus(dst-1.0,scale);
+  float wc=Gaus(dst+0.0,scale);
+  float wd=Gaus(dst+1.0,scale);
+  float we=Gaus(dst+2.0,scale);
+  // Return filtered sample.
+  return (a*wa+b*wb+c*wc+d*wd+e*we)/(wa+wb+wc+wd+we);}
+
+// Return scanline weight.
+float Scan(vec2 pos,float off){
+  float dst=Dist(pos).y;
+  return Gaus(dst+off,hardScan);}
+
+// Allow nearest three lines to effect pixel.
+vec3 Tri(vec2 pos){
+  vec3 a=Horz3(pos,-1.0);
+  vec3 b=Horz5(pos, 0.0);
+  vec3 c=Horz3(pos, 1.0);
+  float wa=Scan(pos,-1.0);
+  float wb=Scan(pos, 0.0);
+  float wc=Scan(pos, 1.0);
+  return a*wa+b*wb+c*wc;}
+
+// Distortion of scanlines, and end of screen alpha.
+vec2 Warp(vec2 pos){
+  pos=pos*2.0-1.0;    
+  pos*=vec2(1.0+(pos.y*pos.y)*warp.x,1.0+(pos.x*pos.x)*warp.y);
+  return pos*0.5+0.5;}
+
+// Shadow mask.
+vec3 Mask(vec2 pos){
+  pos.x+=pos.y*3.0;
+  vec3 mask=vec3(maskDark,maskDark,maskDark);
+  pos.x=fract(pos.x/6.0);
+  if(pos.x<0.333)mask.r=maskLight;
+  else if(pos.x<0.666)mask.g=maskLight;
+  else mask.b=maskLight;
+  return mask;}    
+
+// Draw dividing bars.
+float Bar(float pos,float bar){pos-=bar;return pos*pos<4.0?0.0:1.0;}
+
+// Entry.
+void main(){
+  // Unmodified.
+  vec4 fragColor;
+  vec4 fragCoord = gl_FragCoord;
+  
+  vec2 iResolution = res;
+  
+  if(false && fragCoord.x<iResolution.x*0.333){
+    fragColor.rgb=Fetch(fragCoord.xy/iResolution.xy,vec2(0.0,0.0));}
+  else{
+    vec2 pos=Warp(fragCoord.xy/iResolution.xy);
+    if(false && fragCoord.x<iResolution.x*0.666){
+      hardScan=-12.0;
+      maskDark=maskLight=1.0;
+      pos=Warp(fragCoord.xy/iResolution.xy);}
+    fragColor.rgb=Tri(pos)*Mask(fragCoord.xy);}    
+  fragColor.a=1.0;  
+//  fragColor.rgb*=
+  //  Bar(fragCoord.x,iResolution.x*0.333)*
+    //Bar(fragCoord.x,iResolution.x*0.666);
+  fragColor.rgb=ToSrgb(fragColor.rgb);
+  gl_FragColor = fragColor;
+  }
