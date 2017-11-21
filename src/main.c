@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
 	game->handlers.event = &GlobalEventHandler;
 	game->handlers.destroy = &DestroyGameData;
 
-	al_set_mixer_gain(game->audio.fx, 1.75);
+	al_set_mixer_gain(game->audio.mixer, 1.75);
 
 	return libsuperderpy_run(game);
 }
