@@ -50,7 +50,7 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 	// Draw everything to the screen here.
 	al_set_target_bitmap(game->data->fb);
 	al_clear_to_color(al_map_rgb(24, 24, 24));
-	al_draw_bitmap(data->credits, 0, (int)(data->pos * 1080 / 180.0), 0);
+	al_draw_scaled_bitmap(data->credits, 0, 0, 1920, 275, 0, (int)(data->pos * game->viewport.height / 180.0), game->viewport.width, game->viewport.height * (275 / 1080.0), 0);
 	DrawCRTScreen(game);
 }
 
@@ -81,6 +81,8 @@ void Gamestate_Unload(struct Game* game, struct GamestateResources* data) {
 	// Called when the gamestate library is being unloaded.
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_bitmap(data->credits);
+	al_destroy_sample_instance(data->ambient);
+	al_destroy_sample(data->sample);
 	free(data);
 }
 

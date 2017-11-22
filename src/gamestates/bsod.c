@@ -83,7 +83,7 @@ void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {
 	// Called once, when the gamestate library is being loaded.
 	// Good place for allocating memory, loading bitmaps etc.
 	struct GamestateResources* data = malloc(sizeof(struct GamestateResources));
-	data->font = al_load_ttf_font(GetDataFilePath(game, "fonts/PerfectDOSVGA437.ttf"), 22, 0);
+	data->font = al_load_ttf_font(GetDataFilePath(game, "fonts/PerfectDOSVGA437.ttf"), 22 * game->viewport.height / 1080.0, 0);
 
 	(*progress)(game);
 	return data;

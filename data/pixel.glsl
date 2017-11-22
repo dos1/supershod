@@ -22,7 +22,9 @@ uniform float height;
 
 // Emulated input resolution.
 uniform vec2 res;
+uniform vec2 res2;
 uniform vec2 offset;
+uniform vec2 pow2;
 //vec2 res = vec2(width, height);
 #if 1
   // Fix resolution to set amount.
@@ -69,7 +71,12 @@ vec3 Fetch(vec2 pos,vec2 off){
   pos=floor(pos*res+off)/res-(offset/res);
   if(max(abs(pos.x-0.5),abs(pos.y-0.5))>0.5)return vec3(0.0,0.0,0.0);
  // pos.y = 1.0-pos.y;
-  return ToLinear(texture2D(tex,pos.xy,-16.0).rgb);}
+#ifdef GL_ES
+  vec2 mod = res2 / pow2;
+#else
+  vec2 mod = vec2(1.0, 1.0);
+#endif
+  return ToLinear(texture2D(tex,pos.xy*mod,-16.0).rgb);}
 
 // Distance in emulated pixels to nearest texel.
 vec2 Dist(vec2 pos){pos=pos*res;return -((pos-floor(pos))-vec2(0.5));}

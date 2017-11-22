@@ -30,7 +30,6 @@ struct GamestateResources {
 	int blinks;
 	ALLEGRO_SAMPLE* sample;
 	ALLEGRO_SAMPLE_INSTANCE* noise;
-	ALLEGRO_SHADER* shader;
 };
 
 int Gamestate_ProgressCount = 1; // number of loading steps as reported by Gamestate_Load
@@ -53,15 +52,10 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 
 	al_set_target_bitmap(data->logo);
 	WhiteNoise(game);
-	al_set_target_backbuffer(game->display);
+	al_set_target_bitmap(game->data->fb);
+	al_draw_scaled_bitmap(data->logo, 0, 0, 320, 180, 0, 0, game->viewport.width, game->viewport.height, 0);
 
-	al_use_shader(game->data->shader);
-	al_set_shader_int("scaleFactor", 1);
-	al_draw_scaled_bitmap(data->logo, 0, 0, 320, 180, 0, 0, 1920, 1080, 0);
-
-	al_use_shader(NULL);
-
-	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 1920, 1080, 0);
+	DrawCRTScreen(game);
 }
 
 void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, ALLEGRO_EVENT* ev) {
@@ -77,7 +71,7 @@ void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {
 	// Called once, when the gamestate library is being loaded.
 	// Good place for allocating memory, loading bitmaps etc.
 	struct GamestateResources* data = malloc(sizeof(struct GamestateResources));
-	data->logo = al_create_bitmap(320, 180);
+	data->logo = CreateNotPreservedBitmap(320, 180);
 
 	data->sample = al_load_sample(GetDataFilePath(game, "noise.flac"));
 	data->noise = al_create_sample_instance(data->sample);
@@ -91,6 +85,8 @@ void Gamestate_Unload(struct Game* game, struct GamestateResources* data) {
 	// Called when the gamestate library is being unloaded.
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_bitmap(data->logo);
+	al_destroy_sample_instance(data->noise);
+	al_destroy_sample(data->sample);
 	free(data);
 }
 

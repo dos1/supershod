@@ -47,6 +47,9 @@ void Gamestate_Logic(struct Game* game, struct GamestateResources* data) {
 		}
 	}
 	if ((data->blinks == 4) && (data->blink_counter == 19)) {
+		LoadGamestate(game, "noise");
+		LoadGamestate(game, "credits");
+		LoadGamestate(game, "bsod");
 		SwitchCurrentGamestate(game, "gaem");
 	}
 }
@@ -59,9 +62,9 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 
 	if (data->blink_counter >= 20) {
 		if (data->blinks < 2) {
-			al_draw_bitmap(data->logo, 0, 0, 0);
+			al_draw_scaled_bitmap(data->logo, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 		} else {
-			al_draw_bitmap(data->hd, 0, 0, 0);
+			al_draw_scaled_bitmap(data->hd, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 		}
 	}
 
@@ -72,6 +75,9 @@ void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, 
 	// Called for each event in Allegro event queue.
 	// Here you can handle user input, expiring timers etc.
 	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE)) {
+		LoadGamestate(game, "noise");
+		LoadGamestate(game, "credits");
+		LoadGamestate(game, "bsod");
 		SwitchCurrentGamestate(game, "gaem"); // mark this gamestate to be stopped and unloaded
 		// When there are no active gamestates, the engine will quit.
 	}
@@ -91,6 +97,11 @@ void Gamestate_Unload(struct Game* game, struct GamestateResources* data) {
 	// Called when the gamestate library is being unloaded.
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_bitmap(data->logo);
+	al_destroy_bitmap(data->hd);
+	al_stop_sample_instance(game->data->super);
+	al_stop_sample_instance(game->data->shod);
+	al_stop_sample_instance(game->data->h);
+	al_stop_sample_instance(game->data->d);
 	free(data);
 }
 

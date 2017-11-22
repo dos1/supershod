@@ -27,7 +27,6 @@ struct GamestateResources {
 	// It gets created on load and then gets passed around to all other function calls.
 	ALLEGRO_BITMAP* logo;
 	ALLEGRO_BITMAP *shod, *shod2, *shod3, *shod4;
-	ALLEGRO_BITMAP* canvas;
 	ALLEGRO_BITMAP* time;
 	struct Timeline* timeline;
 	int blink_counter;
@@ -96,29 +95,29 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 
 	al_set_target_bitmap(game->data->fb);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
-	al_draw_bitmap(data->shod, 0, 0, 0);
+	al_draw_scaled_bitmap(data->shod, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 
 	if (data->player2) {
-		al_draw_bitmap(data->shod2, 0, 0, 0);
+		al_draw_scaled_bitmap(data->shod2, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 	}
 	if (data->player3) {
-		al_draw_bitmap(data->shod3, 0, 0, 0);
+		al_draw_scaled_bitmap(data->shod3, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 	}
 	if (data->player4) {
-		al_draw_bitmap(data->shod4, 0, 0, 0);
+		al_draw_scaled_bitmap(data->shod4, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 	}
 
 	if (data->showtime || data->showsuper) {
-		al_draw_filled_rectangle(0, 0, 1920, 1080, al_map_rgba(0, 0, 0, 64 - (rand() % 4)));
+		al_draw_filled_rectangle(0, 0, game->viewport.width, game->viewport.height, al_map_rgba(0, 0, 0, 92 - (rand() % 4)));
 	}
 
 	if (data->showtime) {
-		al_draw_bitmap(data->time, 0, 0, 0);
+		al_draw_scaled_bitmap(data->time, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 	}
 
 	if (data->showsuper) {
 		if (data->blink_counter >= 20) {
-			al_draw_bitmap(data->logo, 0, 0, 0);
+			al_draw_scaled_bitmap(data->logo, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 		}
 	}
 
@@ -196,7 +195,6 @@ void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {
 	progress(game);
 	data->shod4 = al_load_bitmap(GetDataFilePath(game, "shod4.png"));
 	progress(game);
-	data->canvas = al_create_bitmap(1920, 1080);
 	data->timeline = TM_Init(game, "supershod");
 
 	data->sample = al_load_sample(GetDataFilePath(game, "ambient.flac"));
@@ -217,9 +215,17 @@ void Gamestate_Unload(struct Game* game, struct GamestateResources* data) {
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_bitmap(data->logo);
 	al_destroy_bitmap(data->shod);
+	al_destroy_bitmap(data->shod2);
+	al_destroy_bitmap(data->shod3);
+	al_destroy_bitmap(data->shod4);
 	al_destroy_bitmap(data->time);
-	al_destroy_bitmap(data->canvas);
 	TM_Destroy(data->timeline);
+
+	al_destroy_sample_instance(data->ambient);
+	al_destroy_sample_instance(data->click);
+	al_destroy_sample(data->sample);
+	al_destroy_sample(data->clicks);
+
 	free(data);
 }
 

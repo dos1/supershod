@@ -134,21 +134,9 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 
 		al_draw_bitmap(data->checkerboard, 0, 0, 0);
 
-		al_set_target_backbuffer(game->display);
-
-		al_use_shader(game->data->shader);
-		int x, y, w, h;
-		al_get_clipping_rectangle(&x, &y, &w, &h);
-		float res[2] = {w, h};
-		al_set_shader_float_vector("res", 2, res, 1);
-		float offset[2] = {x, y};
-		al_set_shader_float_vector("offset", 2, offset, 1);
-
+		al_set_target_bitmap(game->data->fb);
 		al_draw_scaled_bitmap(data->pixelator, 0, 0, 320, 180, 0, 0, game->viewport.width, game->viewport.height, 0);
-
-		al_use_shader(NULL);
-
-		al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 1920, 1080, 0);
+		DrawCRTScreen(game);
 	}
 }
 

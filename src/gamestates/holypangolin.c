@@ -26,7 +26,7 @@
 #define SKIP_GAMESTATE NEXT_GAMESTATE
 
 struct GamestateResources {
-	ALLEGRO_BITMAP *bmp, *screen;
+	ALLEGRO_BITMAP* bmp;
 	int counter;
 	ALLEGRO_AUDIO_STREAM* monkeys;
 };
@@ -41,7 +41,7 @@ void Gamestate_Logic(struct Game* game, struct GamestateResources* data) {
 }
 
 void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
-	al_set_target_bitmap(data->screen);
+	al_set_target_bitmap(game->data->fb);
 
 	al_clear_to_color(al_map_rgb(255, 255, 255));
 	al_draw_scaled_bitmap(data->bmp, 0, 0, al_get_bitmap_width(data->bmp), al_get_bitmap_height(data->bmp), 0, 0, game->viewport.width, game->viewport.height, 0);
@@ -50,20 +50,7 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 		al_draw_filled_rectangle(0, 0, game->viewport.width, game->viewport.height, al_map_rgba_f(1 - data->counter / 280.0, 1 - data->counter / 280.0, 1 - data->counter / 280.0, 1 - data->counter / 280.0));
 	}
 
-	al_set_target_backbuffer(game->display);
-	al_use_shader(game->data->shader);
-	int x, y, w, h;
-	al_get_clipping_rectangle(&x, &y, &w, &h);
-	float res[2] = {w, h};
-	al_set_shader_float_vector("res", 2, res, 1);
-	float offset[2] = {x, y};
-	al_set_shader_float_vector("offset", 2, offset, 1);
-
-	al_draw_bitmap(data->screen, 0, 0, 0);
-
-	al_use_shader(NULL);
-
-	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 1920, 1080, 0);
+	DrawCRTScreen(game);
 }
 
 void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, ALLEGRO_EVENT* ev) {
@@ -81,8 +68,6 @@ void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {
 	al_set_audio_stream_playing(data->monkeys, false);
 	al_attach_audio_stream_to_mixer(data->monkeys, game->audio.fx);
 	al_set_audio_stream_gain(data->monkeys, 0.75);
-
-	data->screen = al_create_bitmap(1920, 1080);
 
 	return data;
 }

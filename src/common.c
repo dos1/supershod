@@ -23,6 +23,17 @@
 #include <libsuperderpy.h>
 #include <math.h>
 
+static int intlog(double base, double x) {
+	return ceil(log(x) / log(base));
+}
+
+static float npow2(struct Game* game, float a) {
+	//	if (al_get_display_option(game->display, ALLEGRO_SUPPORT_NPOT_BITMAP)) {
+	//		return a;
+	//	}
+	return pow(2, intlog(2, a));
+}
+
 void DrawCRTScreen(struct Game* game) {
 	al_set_target_backbuffer(game->display);
 	al_use_shader(game->data->shader);
@@ -32,9 +43,13 @@ void DrawCRTScreen(struct Game* game) {
 	al_set_shader_float_vector("res", 2, res, 1);
 	float offset[2] = {x, y};
 	al_set_shader_float_vector("offset", 2, offset, 1);
+	float res2[2] = {game->viewport.width, game->viewport.height};
+	al_set_shader_float_vector("res2", 2, res2, 1);
+	float pow2[2] = {npow2(game, game->viewport.width), npow2(game, game->viewport.height)};
+	al_set_shader_float_vector("pow2", 2, pow2, 1);
 	al_draw_bitmap(game->data->fb, 0, 0, 0);
 	al_use_shader(NULL);
-	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, 1920, 1080, 0);
+	al_draw_scaled_bitmap(game->data->screen, 0, 0, 640, 360, 0, 0, game->viewport.width, game->viewport.height, 0);
 }
 
 bool GlobalEventHandler(struct Game* game, ALLEGRO_EVENT* ev) {
@@ -87,7 +102,7 @@ struct CommonResources* CreateGameData(struct Game* game) {
 	al_set_sample_instance_gain(data->d, 1.2);
 
 	data->screen = al_load_bitmap(GetDataFilePath(game, "screen.png"));
-	data->fb = al_create_bitmap(1920, 1080);
+	data->fb = CreateNotPreservedBitmap(game->viewport.width, game->viewport.height);
 
 	return data;
 }
