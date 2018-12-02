@@ -23,6 +23,80 @@
 #include <libsuperderpy.h>
 #include <math.h>
 
+void Compositor(struct Game* game, struct Gamestate* gamestates) {
+	struct Gamestate* tmp = gamestates;
+	al_set_target_bitmap(game->data->output);
+	ClearToColor(game, al_map_rgb(0, 0, 0));
+	while (tmp) {
+		if ((tmp->loaded) && (tmp->started)) {
+			al_draw_scaled_bitmap(tmp->fb, 0, 0, al_get_bitmap_width(tmp->fb), al_get_bitmap_height(tmp->fb), game->_priv.clip_rect.x, game->_priv.clip_rect.y, 1920, 1080, 0);
+		}
+		tmp = tmp->next;
+	}
+	if (game->_priv.loading.inProgress) {
+		al_draw_scaled_bitmap(game->loading_fb, 0, 0, al_get_bitmap_width(game->loading_fb), al_get_bitmap_height(game->loading_fb), game->_priv.clip_rect.x, game->_priv.clip_rect.y, 1920, 1080, 0);
+	}
+
+	al_set_target_bitmap(game->data->blur);
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_draw_scaled_bitmap(game->data->output, 0, 0, al_get_bitmap_width(game->data->output), al_get_bitmap_height(game->data->output),
+		0, 0, al_get_bitmap_width(game->data->blur), al_get_bitmap_height(game->data->blur), 0);
+
+	float size[2] = {al_get_bitmap_width(game->data->blur), al_get_bitmap_height(game->data->blur)};
+
+	al_set_target_bitmap(game->data->small);
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_use_shader(game->data->kawese_shader);
+	al_set_shader_float_vector("size", 2, size, 1);
+	al_set_shader_float("kernel", 0);
+	al_draw_bitmap(game->data->blur, 0, 0, 0);
+	al_use_shader(NULL);
+
+	al_set_target_bitmap(game->data->blur);
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_use_shader(game->data->kawese_shader);
+	al_set_shader_float_vector("size", 2, size, 2);
+	al_set_shader_float("kernel", 0);
+	al_draw_bitmap(game->data->small, 0, 0, 0);
+	al_use_shader(NULL);
+
+	al_set_target_bitmap(game->data->small);
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_use_shader(game->data->kawese_shader);
+	al_set_shader_float_vector("size", 2, size, 4);
+	al_set_shader_float("kernel", 0);
+	al_draw_bitmap(game->data->blur, 0, 0, 0);
+	al_use_shader(NULL);
+
+	al_set_target_bitmap(game->data->blur);
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_use_shader(game->data->kawese_shader);
+	al_set_shader_float_vector("size", 2, size, 4);
+	al_set_shader_float("kernel", 0);
+	al_draw_bitmap(game->data->small, 0, 0, 0);
+	al_use_shader(NULL);
+
+	al_set_target_bitmap(game->data->small);
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_use_shader(game->data->kawese_shader);
+	al_set_shader_float_vector("size", 2, size, 6);
+	al_set_shader_float("kernel", 0);
+	al_draw_bitmap(game->data->blur, 0, 0, 0);
+	al_use_shader(NULL);
+
+	al_set_target_bitmap(game->data->blur);
+	al_clear_to_color(al_map_rgb(0, 0, 0));
+	al_use_shader(game->data->kawese_shader);
+	al_set_shader_float_vector("size", 2, size, 8);
+	al_set_shader_float("kernel", 0);
+	al_draw_bitmap(game->data->small, 0, 0, 0);
+	al_use_shader(NULL);
+
+	al_set_target_backbuffer(game->display);
+	ClearToColor(game, al_map_rgb(0, 0, 0));
+	al_draw_scaled_bitmap(game->data->blur, 0, 0, al_get_bitmap_width(game->data->blur), al_get_bitmap_height(game->data->blur), game->_priv.clip_rect.x, game->_priv.clip_rect.y, game->_priv.clip_rect.w, game->_priv.clip_rect.h, 0);
+}
+
 bool GlobalEventHandler(struct Game* game, ALLEGRO_EVENT* ev) {
 	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_F)) {
 		game->config.fullscreen = !game->config.fullscreen;
@@ -54,13 +128,21 @@ struct CommonResources* CreateGameData(struct Game* game) {
 	data->supersample = al_load_sample(GetDataFilePath(game, "super.flac"));
 	data->shodsample = al_load_sample(GetDataFilePath(game, "shod.flac"));
 
+	data->kawese_shader = CreateShader(game, GetDataFilePath(game, "shaders/vertex.glsl"), GetDataFilePath(game, "shaders/kawese.glsl"));
+
 	data->super = al_create_sample_instance(data->supersample);
 	data->shod = al_create_sample_instance(data->shodsample);
+	al_set_sample_instance_gain(data->super, 2.0);
+	al_set_sample_instance_gain(data->shod, 2.0);
 
 	al_attach_sample_instance_to_mixer(data->super, game->audio.fx);
 	al_attach_sample_instance_to_mixer(data->shod, game->audio.fx);
 
 	data->screen = al_load_bitmap(GetDataFilePath(game, "screen.png"));
+
+	data->output = al_create_bitmap(1920, 1080);
+	data->small = al_create_bitmap(32 * 2, 18 * 2);
+	data->blur = al_create_bitmap(32 * 2, 18 * 2);
 
 	return data;
 }

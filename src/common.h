@@ -7,9 +7,13 @@ struct CommonResources {
 	ALLEGRO_BITMAP* screen;
 	ALLEGRO_SAMPLE *supersample, *shodsample;
 	ALLEGRO_SAMPLE_INSTANCE *super, *shod;
+
+	ALLEGRO_BITMAP *small, *blur, *output;
+	ALLEGRO_SHADER* kawese_shader;
 };
 
 struct CommonResources* CreateGameData(struct Game* game);
 void DestroyGameData(struct Game* game);
 void WhiteNoise(struct Game* game);
 bool GlobalEventHandler(struct Game* game, ALLEGRO_EVENT* ev);
+void Compositor(struct Game* game, struct Gamestate* gamestates);

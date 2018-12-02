@@ -25,7 +25,7 @@
 #include <signal.h>
 #include <stdio.h>
 
-void derp(int sig) {
+static void derp(int sig) {
 	ssize_t __attribute__((unused)) n = write(STDERR_FILENO, "Segmentation fault\nI just don't know what went wrong!\n", 54);
 	abort();
 }
@@ -50,6 +50,8 @@ int main(int argc, char** argv) {
 
 	game->handlers.event = &GlobalEventHandler;
 	game->handlers.destroy = &DestroyGameData;
+
+	EnableCompositor(game, Compositor);
 
 	return libsuperderpy_run(game);
 }
