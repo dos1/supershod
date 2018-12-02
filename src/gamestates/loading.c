@@ -30,7 +30,7 @@ int Gamestate_ProgressCount = -1;
 
 void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, ALLEGRO_EVENT* ev){};
 
-void Gamestate_Logic(struct Game* game, struct GamestateResources* data){};
+void Gamestate_Logic(struct Game* game, struct GamestateResources* data, double delta){};
 
 void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 	al_set_target_bitmap(game->data->fb);

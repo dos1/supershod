@@ -25,20 +25,24 @@
 struct GamestateResources {
 	// This struct is for every resource allocated and used by your gamestate.
 	// It gets created on load and then gets passed around to all other function calls.
-	ALLEGRO_BITMAP* logo;
-	ALLEGRO_BITMAP *shod, *shod2, *shod3, *shod4;
-	ALLEGRO_BITMAP* time;
+	ALLEGRO_BITMAP *logo, *bg, *shodwin, *shodlose;
+	ALLEGRO_BITMAP* texts[10];
+	int text;
+	ALLEGRO_BITMAP *time, *url;
 	struct Timeline* timeline;
 	int blink_counter;
 	int blinks;
 	bool showtime;
 	bool showsuper;
 	bool allowed;
+	bool started;
 
 	bool player1;
 	bool player2;
 	bool player3;
 	bool player4;
+
+	int players, losers;
 
 	ALLEGRO_SAMPLE* sample;
 	ALLEGRO_SAMPLE_INSTANCE* ambient;
@@ -46,31 +50,44 @@ struct GamestateResources {
 	ALLEGRO_SAMPLE_INSTANCE* click;
 };
 
-int Gamestate_ProgressCount = 8; // number of loading steps as reported by Gamestate_Load
+int Gamestate_ProgressCount = 4; // number of loading steps as reported by Gamestate_Load
 
-static bool ShowTime(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
-	struct GamestateResources* data = action->arguments->value;
-	if (state == TM_ACTIONSTATE_START) {
+static TM_ACTION(ShowTime) {
+	if (action->state == TM_ACTIONSTATE_START) {
 		if (data->allowed) {
 			data->showtime = true;
 			al_play_sample_instance(data->click);
+			data->time = data->texts[data->text];
 		}
 	}
 	return true;
 }
 
-static bool HideTime(struct Game* game, struct TM_Action* action, enum TM_ActionState state) {
-	struct GamestateResources* data = action->arguments->value;
-	if (state == TM_ACTIONSTATE_START) {
+static TM_ACTION(NextTime) {
+	if (action->state == TM_ACTIONSTATE_START) {
+		al_play_sample_instance(data->click);
+		data->text++;
+		if (data->text > 9) {
+			data->text = 9;
+		}
+
+		data->time = data->texts[data->text];
+	}
+	return true;
+}
+
+static TM_ACTION(HideTime) {
+	if (action->state == TM_ACTIONSTATE_START) {
 		if (data->allowed) {
 			data->showtime = false;
+			data->started = true;
 			al_play_sample_instance(data->click);
 		}
 	}
 	return true;
 }
 
-void Gamestate_Logic(struct Game* game, struct GamestateResources* data) {
+void Gamestate_Logic(struct Game* game, struct GamestateResources* data, double delta) {
 	// Called 60 times per second. Here you should do all your game logic.
 	data->blink_counter++;
 	if (data->blink_counter > 60) {
@@ -86,7 +103,7 @@ void Gamestate_Logic(struct Game* game, struct GamestateResources* data) {
 			SwitchCurrentGamestate(game, "noise");
 		}
 	}
-	TM_Process(data->timeline);
+	TM_Process(data->timeline, delta);
 }
 
 void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
@@ -95,24 +112,26 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 
 	al_set_target_bitmap(game->data->fb);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
-	al_draw_scaled_bitmap(data->shod, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 
-	if (data->player2) {
-		al_draw_scaled_bitmap(data->shod2, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
-	}
-	if (data->player3) {
-		al_draw_scaled_bitmap(data->shod3, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
-	}
-	if (data->player4) {
-		al_draw_scaled_bitmap(data->shod4, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
-	}
+	al_draw_bitmap(data->bg, 0, 0, 0);
+
+	//al_draw_scaled_bitmap(data->shod, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
 
 	if (data->showtime || data->showsuper) {
 		al_draw_filled_rectangle(0, 0, game->viewport.width, game->viewport.height, al_map_rgba(0, 0, 0, 92 - (rand() % 4)));
 	}
 
 	if (data->showtime) {
-		al_draw_scaled_bitmap(data->time, 0, 0, 1920, 1080, 0, 0, game->viewport.width, game->viewport.height, 0);
+		al_draw_scaled_bitmap(data->time, 0, 0, 1920, 1080, 640, 220, game->viewport.width, game->viewport.height, 0);
+	} else {
+		al_draw_scaled_bitmap(data->url, 0, 0, 1920, 1080, 640, 220, game->viewport.width, game->viewport.height, 0);
+	}
+
+	if (data->started) {
+		data->players = 25;
+		for (int i = 0; i < data->players; i++) {
+			al_draw_scaled_bitmap(data->shodwin, 0, 0, 640, 640, 640 + (i % 5) * 128, 220 + (i / 5) * 128, 128, 128, 0);
+		}
 	}
 
 	if (data->showsuper) {
@@ -131,7 +150,7 @@ void Gamestate_Draw(struct Game* game, struct GamestateResources* data) {
 void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, ALLEGRO_EVENT* ev) {
 	// Called for each event in Allegro event queue.
 	// Here you can handle user input, expiring timers etc.
-	TM_HandleEvent(data->timeline, ev);
+	//TM_HandleEvent(data->timeline, ev);
 	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE)) {
 		UnloadCurrentGamestate(game); // mark this gamestate to be stopped and unloaded
 		// When there are no active gamestates, the engine will quit.
@@ -140,9 +159,28 @@ void Gamestate_ProcessEvent(struct Game* game, struct GamestateResources* data, 
 	if ((ev->type == ALLEGRO_EVENT_KEY_DOWN) && (ev->keyboard.keycode == ALLEGRO_KEY_ENTER)) {
 		if (data->allowed) {
 			TM_CleanQueue(data->timeline);
-			TM_AddAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
-			TM_AddDelay(data->timeline, 4000);
-			TM_AddAction(data->timeline, HideTime, TM_AddToArgs(NULL, 1, data), "HideTime");
+			TM_AddAction(data->timeline, ShowTime, NULL);
+			TM_AddDelay(data->timeline, 3000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 3000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 1000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 1000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 1000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 1000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 5000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 1000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 1000);
+			TM_AddAction(data->timeline, NextTime, NULL);
+			TM_AddDelay(data->timeline, 1000);
+
+			TM_AddAction(data->timeline, HideTime, NULL);
 		}
 	}
 
@@ -186,16 +224,25 @@ void* Gamestate_Load(struct Game* game, void (*progress)(struct Game*)) {
 	data->logo = al_load_bitmap(GetDataFilePath(game, "logo.png"));
 	progress(game);
 	data->time = al_load_bitmap(GetDataFilePath(game, "time.png"));
+	data->bg = al_load_bitmap(GetDataFilePath(game, "bg.png"));
 	progress(game);
-	data->shod = al_load_bitmap(GetDataFilePath(game, "shod.png"));
-	progress(game);
-	data->shod2 = al_load_bitmap(GetDataFilePath(game, "shod2.png"));
-	progress(game);
-	data->shod3 = al_load_bitmap(GetDataFilePath(game, "shod3.png"));
-	progress(game);
-	data->shod4 = al_load_bitmap(GetDataFilePath(game, "shod4.png"));
-	progress(game);
-	data->timeline = TM_Init(game, "supershod");
+	data->timeline = TM_Init(game, data, "supershod");
+
+	data->url = al_load_bitmap(GetDataFilePath(game, "0.png"));
+
+	data->texts[0] = al_load_bitmap(GetDataFilePath(game, "1.png"));
+	data->texts[1] = al_load_bitmap(GetDataFilePath(game, "2.png"));
+	data->texts[2] = al_load_bitmap(GetDataFilePath(game, "3.png"));
+	data->texts[3] = al_load_bitmap(GetDataFilePath(game, "4.png"));
+	data->texts[4] = al_load_bitmap(GetDataFilePath(game, "5.png"));
+	data->texts[5] = al_load_bitmap(GetDataFilePath(game, "6.png"));
+	data->texts[6] = al_load_bitmap(GetDataFilePath(game, "7.png"));
+	data->texts[7] = al_load_bitmap(GetDataFilePath(game, "8.png"));
+	data->texts[8] = al_load_bitmap(GetDataFilePath(game, "9.png"));
+	data->texts[9] = al_load_bitmap(GetDataFilePath(game, "10.png"));
+
+	data->shodwin = al_load_bitmap(GetDataFilePath(game, "schod.png"));
+	data->shodlose = al_load_bitmap(GetDataFilePath(game, "loser.png"));
 
 	data->sample = al_load_sample(GetDataFilePath(game, "ambient.flac"));
 	data->ambient = al_create_sample_instance(data->sample);
@@ -214,11 +261,6 @@ void Gamestate_Unload(struct Game* game, struct GamestateResources* data) {
 	// Called when the gamestate library is being unloaded.
 	// Good place for freeing all allocated memory and resources.
 	al_destroy_bitmap(data->logo);
-	al_destroy_bitmap(data->shod);
-	al_destroy_bitmap(data->shod2);
-	al_destroy_bitmap(data->shod3);
-	al_destroy_bitmap(data->shod4);
-	al_destroy_bitmap(data->time);
 	TM_Destroy(data->timeline);
 
 	al_destroy_sample_instance(data->ambient);
@@ -243,10 +285,8 @@ void Gamestate_Start(struct Game* game, struct GamestateResources* data) {
 	data->player3 = false;
 	data->player4 = false;
 
-	TM_AddDelay(data->timeline, 3000);
-	TM_AddAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
-	TM_AddDelay(data->timeline, 4000);
-	TM_AddAction(data->timeline, HideTime, TM_AddToArgs(NULL, 1, data), "HideTime");
+	//	TM_AddDelay(data->timeline, 3000);
+	//	TM_AddNamedAction(data->timeline, ShowTime, TM_AddToArgs(NULL, 1, data), "ShowTime");
 
 	/*
 	TM_AddDelay(data->timeline, 15000);

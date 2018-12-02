@@ -43,15 +43,13 @@ int main(int argc, char** argv) {
 
 	al_set_window_title(game->display, LIBSUPERDERPY_GAMENAME_PRETTY);
 
-	LoadGamestate(game, "dosowisko");
-	LoadGamestate(game, "holypangolin");
-	LoadGamestate(game, "logo");
 	StartGamestate(game, "dosowisko");
 
 	game->data = CreateGameData(game);
 
 	game->handlers.event = &GlobalEventHandler;
 	game->handlers.destroy = &DestroyGameData;
+	game->handlers.prelogic = &PreLogic;
 
 	al_set_mixer_gain(game->audio.mixer, 1.75);
 
